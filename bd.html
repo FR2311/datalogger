@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DataLogger - Base de Datos</title>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">DL</div>
+      <span class="logo-text">DataLogger</span>
+    </div>
+    <nav class="sidebar-nav">
+      <p class="nav-label">NAVEGACION</p>
+      <a href="index.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Panel Principal
+      </a>
+      <a href="temperatura.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
+        Temperatura
+      </a>
+      <a href="humedad.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+        Humedad
+      </a>
+      <a href="presion.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Presion
+      </a>
+      <p class="nav-label" style="margin-top:2rem;">SISTEMA</p>
+      <a href="historial.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Historial
+      </a>
+      <a href="bd.html" class="nav-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5"/><path d="M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"/></svg>
+        Base de Datos
+      </a>
+      <a href="configuracion.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"/></svg>
+        Configuracion
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="status-dot online"></div>
+      <span>Dispositivo conectado</span>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <header class="topbar">
+      <button class="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div>
+        <h1 class="page-title">Base de Datos</h1>
+        <p class="page-subtitle">Lecturas reales conectadas a Supabase</p>
+      </div>
+      <div class="topbar-right">
+        <span class="update-badge">Actualizado: <strong id="ultimaActualizacion">--:--:--</strong></span>
+        <button class="dark-toggle" id="dark-toggle-btn" onclick="toggleDarkMode()"><span class="dt-icon">☀️</span><span class="dt-label">Claro</span></button>
+        <button class="btn-outline" onclick="cerrarSesion()">Cerrar sesión</button>
+        <button class="btn-primary" onclick="agregarMedicionSimuladaBD()">Actualizar</button>
+      </div>
+    </header>
+
+    <div id="errorBox" class="stat-box" style="display:none;margin-bottom:1.5rem;border-color:#fecaca;color:#991b1b;background:#fee2e2;"></div>
+
+    <section class="cards-grid">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-label">Temperatura</span>
+          <div class="card-icon blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
+          </div>
+        </div>
+        <div class="card-value" id="temperatura">--</div>
+        <div class="card-unit">&deg;C</div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-label">Humedad</span>
+          <div class="card-icon blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+          </div>
+        </div>
+        <div class="card-value" id="humedad">--</div>
+        <div class="card-unit">%HR</div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-label">Presion</span>
+          <div class="card-icon blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+        </div>
+        <div class="card-value" id="presion">--</div>
+        <div class="card-unit">Pa</div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-label">Estado</span>
+          <div class="card-icon gray">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5"/><path d="M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"/></svg>
+          </div>
+        </div>
+        <div class="card-value" id="estado" style="font-size:1.75rem;">--</div>
+        <div class="card-unit">Supabase</div>
+      </div>
+    </section>
+
+    <section class="table-section">
+      <div class="section-header">
+        <h2>Ultimas mediciones</h2>
+        <span style="font-size:.82rem;color:var(--text-soft);">Mostrando ultimos 20 registros</span>
+      </div>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Fecha / Hora</th>
+              <th>Temperatura</th>
+              <th>Humedad</th>
+              <th>Presion</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="tablaMediciones">
+            <tr>
+              <td colspan="5">Cargando datos...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="sidebar-overlay"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-api.js?v=session-options"></script>
+<script src="app.js?v=temp-alerts"></script>
+<script>
+  const bdFormatArgentinaTime = window.formatArgentinaTime || function(date = new Date()) {
+    return date.toLocaleTimeString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' });
+  };
+
+  const bdFormatArgentinaDateTime = window.formatArgentinaDateTime || function(date = new Date()) {
+    return date.toLocaleString('es-AR', {
+      timeZone: 'America/Argentina/Buenos_Aires',
+      dateStyle: 'short',
+      timeStyle: 'medium'
+    });
+  };
+
+  let bdReadings = [];
+  let bdSamplingTimer = null;
+  let bdSamplingTimeout = null;
+
+  function bdRandomBetween(min, max, decimals = 1) {
+    return parseFloat((Math.random() * (max - min) + min).toFixed(decimals));
+  }
+
+  function bdNumericValue(value, fallback) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+
+  function valorMedicion(item, nombres) {
+    const nombre = nombres.find(key => item && Object.prototype.hasOwnProperty.call(item, key));
+    return nombre ? item[nombre] : '--';
+  }
+
+  function fechaMedicion(item) {
+    return valorMedicion(item, ['fecha', 'fecha_hora', 'created_at', 'timestamp', 'time', 'inserted_at']);
+  }
+
+  function bdIntervaloMuestreo() {
+    return typeof getSamplingIntervalMs === 'function' ? getSamplingIntervalMs() : 60000;
+  }
+
+  function bdTiempoMuestra(interval = bdIntervaloMuestreo()) {
+    return typeof getCurrentSampleTime === 'function'
+      ? getCurrentSampleTime(interval)
+      : new Date();
+  }
+
+  function bdTiempoHastaProximaMuestra(interval = bdIntervaloMuestreo()) {
+    if (typeof getMsUntilNextSample === 'function') return getMsUntilNextSample(interval);
+
+    const remainder = Date.now() % interval;
+    const delay = remainder === 0 ? interval : interval - remainder;
+    return Math.max(250, delay);
+  }
+
+  function actualizarResumen(actual) {
+    if (!actual) return;
+
+    const medicion = actual.medicion || actual;
+    document.getElementById('temperatura').textContent =
+      actual.temperatura ?? valorMedicion(medicion, ['temperatura', 'temperatura_c', 'temp', 'temperature']);
+    document.getElementById('humedad').textContent =
+      actual.humedad ?? valorMedicion(medicion, ['humedad', 'humedad_hr', 'hum', 'humidity']);
+    document.getElementById('presion').textContent =
+      actual.presion ?? valorMedicion(medicion, ['presion', 'presion_pa', 'pressure', 'pressure_pa']);
+    const estado = valorMedicion(medicion, ['estado', 'status']);
+    document.getElementById('estado').textContent = estado !== '--' ? estado : 'Normal';
+  }
+
+  function normalizarMedicion(item) {
+    const medicion = item?.medicion || item || {};
+    return {
+      created_at: fechaMedicion(medicion) !== '--' ? fechaMedicion(medicion) : bdTiempoMuestra().toISOString(),
+      temperatura: bdNumericValue(item?.temperatura ?? valorMedicion(medicion, ['temperatura', 'temperatura_c', 'temp', 'temperature']), bdRandomBetween(22, 28)),
+      humedad: bdNumericValue(item?.humedad ?? valorMedicion(medicion, ['humedad', 'humedad_hr', 'hum', 'humidity']), bdRandomBetween(55, 70)),
+      presion: bdNumericValue(item?.presion ?? valorMedicion(medicion, ['presion', 'presion_pa', 'pressure', 'pressure_pa']), bdRandomBetween(100000, 102000, 0)),
+      estado: valorMedicion(medicion, ['estado', 'status']) !== '--' ? valorMedicion(medicion, ['estado', 'status']) : 'Normal'
+    };
+  }
+
+  function crearMedicionSimulada(base = null, sampleDate = bdTiempoMuestra()) {
+    const last = base || bdReadings[0] || {};
+    return {
+      created_at: sampleDate.toISOString(),
+      temperatura: Math.max(0, bdNumericValue(last.temperatura, 24) + bdRandomBetween(-0.5, 0.5)),
+      humedad: Math.max(0, Math.min(100, bdNumericValue(last.humedad, 62) + bdRandomBetween(-1.5, 1.5))),
+      presion: Math.max(0, Math.round(bdNumericValue(last.presion, 101325) + bdRandomBetween(-80, 80, 0))),
+      estado: 'Normal'
+    };
+  }
+
+  function crearHistorialSimulado(cantidad = 20, base = null) {
+    const interval = bdIntervaloMuestreo();
+    const ahora = bdTiempoMuestra(interval).getTime();
+    let last = base ? normalizarMedicion(base) : null;
+
+    return Array.from({ length: cantidad }, (_, index) => {
+      const sampleDate = new Date(ahora - index * interval);
+      const item = crearMedicionSimulada(last, sampleDate);
+      last = item;
+      return item;
+    });
+  }
+
+  function renderBDLiveData() {
+    const actual = bdReadings[0] || crearMedicionSimulada();
+    actualizarResumen(actual);
+    renderTablaMediciones(bdReadings);
+    document.getElementById('ultimaActualizacion').textContent = bdFormatArgentinaTime();
+  }
+
+  function agregarMedicionSimuladaBD() {
+    const interval = bdIntervaloMuestreo();
+    bdReadings = [crearMedicionSimulada(bdReadings[0], bdTiempoMuestra(interval)), ...bdReadings].slice(0, 20);
+    renderBDLiveData();
+  }
+
+  function iniciarMuestreoBD() {
+    if (bdSamplingTimer) clearInterval(bdSamplingTimer);
+    if (bdSamplingTimeout) clearTimeout(bdSamplingTimeout);
+
+    const interval = bdIntervaloMuestreo();
+    bdSamplingTimeout = setTimeout(() => {
+      agregarMedicionSimuladaBD();
+      bdSamplingTimer = setInterval(agregarMedicionSimuladaBD, interval);
+    }, bdTiempoHastaProximaMuestra(interval));
+  }
+
+  function renderTablaMediciones(historial) {
+    const tabla = document.getElementById('tablaMediciones');
+    const registros = Array.isArray(historial) ? historial.slice(0, 20) : [];
+
+    if (!registros.length) {
+      tabla.innerHTML = '<tr><td colspan="5">No hay mediciones para mostrar.</td></tr>';
+      return;
+    }
+
+    tabla.innerHTML = registros.map(item => {
+      const fecha = fechaMedicion(item);
+      const temperatura = valorMedicion(item, ['temperatura', 'temperatura_c', 'temp', 'temperature']);
+      const humedad = valorMedicion(item, ['humedad', 'humedad_hr', 'hum', 'humidity']);
+      const presion = valorMedicion(item, ['presion', 'presion_pa', 'pressure', 'pressure_pa']);
+      const estado = valorMedicion(item, ['estado', 'status']);
+
+      return `<tr>
+        <td>${fecha && fecha !== '--' ? bdFormatArgentinaDateTime(new Date(fecha)) : '--'}</td>
+        <td>${temperatura} &deg;C</td>
+        <td>${humedad} %HR</td>
+        <td>${presion} Pa</td>
+        <td><span class="badge ok">${estado && estado !== '--' ? estado : 'Normal'}</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  async function cargarDatosBD() {
+    const errorBox = document.getElementById('errorBox');
+
+    try {
+      errorBox.style.display = 'none';
+
+      const [dashboard, historial] = await Promise.all([
+        obtenerDashboardActual(),
+        obtenerHistorialMediciones()
+      ]);
+
+      const dashboardActual = Array.isArray(dashboard) ? dashboard[0] : dashboard;
+      const historialNormalizado = Array.isArray(historial)
+        ? historial.map(normalizarMedicion).slice(0, 20)
+        : [];
+
+      bdReadings = historialNormalizado.length
+        ? historialNormalizado
+        : crearHistorialSimulado(20, dashboardActual);
+
+      bdReadings[0] = normalizarMedicion(dashboardActual || bdReadings[0]);
+      renderBDLiveData();
+
+      document.getElementById('ultimaActualizacion').textContent = bdFormatArgentinaTime();
+    } catch (error) {
+      console.error(error);
+      bdReadings = bdReadings.length ? bdReadings : crearHistorialSimulado(20);
+      renderBDLiveData();
+      errorBox.textContent = 'Usando datos simulados porque no se pudieron cargar datos desde Supabase.';
+      errorBox.style.display = 'block';
+    }
+  }
+
+  (async function () {
+    const session = await window.protegerPagina();
+    if (!session) return;
+
+    setInterval(() => {
+      document.getElementById('ultimaActualizacion').textContent = bdFormatArgentinaTime();
+    }, 1000);
+    await cargarDatosBD();
+    iniciarMuestreoBD();
+  })();
+
+  window.addEventListener('storage', event => {
+    if (event.key === 'datalogger_config') iniciarMuestreoBD();
+  });
+</script>
+<script src="sidebar.js"></script>
+</body>
+</html>
