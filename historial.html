@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>DataLogger — Historial</title>
   <link rel="stylesheet" href="styles.css"/>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="interface.css"/>
+  <script src="interface.js" defer></script>
+  <script src="assets/vendor/chart.umd.min.js"></script>
 </head>
 <body>
 <div class="layout">
@@ -66,7 +68,7 @@
       </div>
       <div class="topbar-right">
         <span class="update-badge">Actualizado: <strong id="last-update">--:--:--</strong></span>
-        <button class="btn-outline">⬇ Exportar CSV</button>
+        <button class="btn-outline" onclick="exportHistorialCSV()">⬇ Exportar CSV</button>
         <button class="dark-toggle" id="dark-toggle-btn" onclick="toggleDarkMode()"><span class="dt-icon">☀️</span><span class="dt-label">Claro</span></button>
         <button class="btn-primary" onclick="initHistorial()">↻ Actualizar</button>
       </div>
@@ -101,7 +103,7 @@
         </select>
       </div>
       <div style="padding-top:1.3rem;">
-        <button class="btn-primary" onclick="renderHistorialTable()">Filtrar</button>
+        <button class="btn-primary" onclick="applyHistoryFilters()">Filtrar</button>
       </div>
     </div>
 
@@ -121,7 +123,7 @@
     <section class="table-section">
       <div class="section-header">
         <h2>Registros</h2>
-        <span style="font-size:.82rem;color:var(--text-soft);">Mostrando últimos 20 registros</span>
+        <span style="font-size:.82rem;color:var(--text-soft);" id="history-count">Mostrando últimos 20 registros</span>
       </div>
       <div class="table-wrapper">
         <table class="data-table">
@@ -139,10 +141,10 @@
       </div>
       <!-- Pagination mockup -->
       <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-top:1px solid var(--gray-bg);">
-        <span style="font-size:.82rem;color:var(--text-soft);">Mostrando 1–20 de 1 440 registros</span>
+        <span style="font-size:.82rem;color:var(--text-soft);" id="history-page-count">--</span>
         <div style="display:flex;gap:.4rem;">
-          <button class="btn-outline" style="padding:.3rem .75rem;font-size:.82rem;">‹ Anterior</button>
-          <button class="btn-primary" style="padding:.3rem .75rem;font-size:.82rem;">Siguiente ›</button>
+          <button class="btn-outline" id="history-prev" onclick="changeHistoryPage(-1)" style="padding:.3rem .75rem;font-size:.82rem;">‹ Anterior</button>
+          <button class="btn-primary" id="history-next" onclick="changeHistoryPage(1)" style="padding:.3rem .75rem;font-size:.82rem;">Siguiente ›</button>
         </div>
       </div>
     </section>

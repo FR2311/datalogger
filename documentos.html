@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DataLogger — Documentos</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="interface.css">
+  <script src="interface.js" defer></script>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar"></aside>
+    <main class="main">
+      <header class="topbar">
+        <div><h1 class="page-title">Documentos</h1><p class="page-subtitle">Guías de uso y documentación del datalogger</p></div>
+        <div class="topbar-right"><button class="dark-toggle" id="dark-toggle-btn" onclick="toggleDarkMode()"><span class="dt-icon">☀️</span><span class="dt-label">Claro</span></button></div>
+      </header>
+      <section class="document-grid">
+        <article class="document-card"><span class="heading-icon">01</span><h2>Manual de usuario</h2><p>Acceso, navegación, unidades de medida, historial, configuración y cierre de sesión.</p><a href="userManual.md" download>Descargar manual →</a></article>
+        <article class="document-card"><span class="heading-icon green">02</span><h2>Lecturas y unidades</h2><p>Temperatura en Celsius, Kelvin y Fahrenheit; humedad relativa y absoluta; presión en Pa, hPa, atm y mmHg.</p><a href="temperatura.html">Consultar las variables →</a></article>
+        <article class="document-card"><span class="heading-icon">03</span><h2>Reportes e historial</h2><p>Consultá la evolución de las variables, seleccioná el rango de fechas y descargá los registros disponibles como CSV.</p><a href="reportes.html">Abrir reportes →</a></article>
+        <article class="document-card"><span class="heading-icon green">04</span><h2>Preferencias</h2><p>Personalizá unidades, intervalo, límites visuales y colores de los gráficos. Las preferencias se conservan en este navegador.</p><a href="configuracion.html">Abrir configuración →</a></article>
+        <article class="document-card"><span class="heading-icon">05</span><h2>Fuente de datos</h2><p>Base de Datos y Reportes consultan Supabase. El panel y las pantallas de variables conservan el modo de demostración existente. Los valores de demostración no representan mediciones del hardware.</p><a href="bd.html">Consultar la base de datos →</a></article>
+        <article class="document-card"><span class="heading-icon green">06</span><h2>Navegación rápida</h2><p>Usá la lupa para encontrar un apartado, la campana para consultar los límites de alerta y el menú de cuenta para cerrar sesión.</p><a href="index.html">Volver al panel →</a></article>
+      </section>
+    </main>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-api.js?v=session-options"></script>
+  <script src="app.js?v=temp-alerts"></script>
+  <script>window.protegerPagina();</script>
+</body>
+</html>

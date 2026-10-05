@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DataLogger — Reportes</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="interface.css">
+  <script src="interface.js" defer></script>
+  <script src="assets/vendor/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar"></aside>
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h1 class="page-title">Reportes</h1>
+          <p class="page-subtitle">Resumen de las mediciones almacenadas en Supabase</p>
+        </div>
+        <div class="topbar-right">
+          <span class="update-badge">Actualizado: <strong id="last-update">--:--:--</strong></span>
+          <button class="dark-toggle" id="dark-toggle-btn" onclick="toggleDarkMode()"><span class="dt-icon">☀️</span><span class="dt-label">Claro</span></button>
+          <button class="btn-outline" id="report-export" disabled>Exportar CSV</button>
+          <button class="btn-primary" id="report-refresh">Actualizar</button>
+        </div>
+      </header>
+      <p class="report-note" id="report-message" role="status">Consultando las lecturas de las últimas 24 horas…</p>
+      <section class="cards-grid" aria-label="Resumen del reporte">
+        <div class="card"><div class="card-header"><span class="card-label">Temperatura promedio</span></div><div class="card-value" id="report-temp">--</div><div class="card-unit">°C</div><div class="card-footer" id="report-temp-range">Sin datos</div></div>
+        <div class="card"><div class="card-header"><span class="card-label">Humedad promedio</span></div><div class="card-value" id="report-hum">--</div><div class="card-unit">%HR</div><div class="card-footer" id="report-hum-range">Sin datos</div></div>
+        <div class="card"><div class="card-header"><span class="card-label">Presión promedio</span></div><div class="card-value" id="report-pres">--</div><div class="card-unit">Pa</div><div class="card-footer" id="report-pres-range">Sin datos</div></div>
+        <div class="card"><div class="card-header"><span class="card-label">Registros consultados</span></div><div class="card-value" id="report-count">--</div><div class="card-unit">muestras</div><div class="card-footer">Últimas 24 horas</div></div>
+      </section>
+      <section class="chart-card"><div class="chart-header"><h2>Evolución de las mediciones</h2><a class="link-more" href="historial.html">Ver historial →</a></div><canvas id="reportChart" height="90"></canvas></section>
+      <section class="table-section"><div class="section-header"><h2>Últimas mediciones del reporte</h2><span id="report-table-count"></span></div><div class="table-wrapper"><table class="data-table"><thead><tr><th>Fecha / Hora</th><th>Temperatura</th><th>Humedad</th><th>Presión</th><th>Estado</th></tr></thead><tbody id="report-table"><tr><td colspan="5">Cargando datos…</td></tr></tbody></table></div></section>
+    </main>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-api.js?v=session-options"></script>
+  <script src="app.js?v=temp-alerts"></script>
+  <script src="reportes.js"></script>
+</body>
+</html>

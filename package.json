@@ -1,0 +1,7 @@
+{
+  "name": "datalogger-interface",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": { "test:ui": "node tests/interface-smoke.cjs" },
+  "devDependencies": { "puppeteer": "24.37.1" }
+}

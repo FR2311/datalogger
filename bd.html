@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>DataLogger - Base de Datos</title>
   <link rel="stylesheet" href="styles.css"/>
+  <link rel="stylesheet" href="interface.css"/>
+  <script src="interface.js" defer></script>
 </head>
 <body>
 <div class="layout">
@@ -121,7 +123,7 @@
 
     <section class="table-section">
       <div class="section-header">
-        <h2>Ultimas mediciones</h2>
+        <h2>Últimas mediciones</h2>
         <span style="font-size:.82rem;color:var(--text-soft);">Mostrando ultimos 20 registros</span>
       </div>
       <div class="table-wrapper">
@@ -208,13 +210,19 @@
 
     const medicion = actual.medicion || actual;
     document.getElementById('temperatura').textContent =
-      actual.temperatura ?? valorMedicion(medicion, ['temperatura', 'temperatura_c', 'temp', 'temperature']);
+      formatoValorBD(actual.temperatura ?? valorMedicion(medicion, ['temperatura', 'temperatura_c', 'temp', 'temperature']));
     document.getElementById('humedad').textContent =
-      actual.humedad ?? valorMedicion(medicion, ['humedad', 'humedad_hr', 'hum', 'humidity']);
+      formatoValorBD(actual.humedad ?? valorMedicion(medicion, ['humedad', 'humedad_hr', 'hum', 'humidity']));
     document.getElementById('presion').textContent =
-      actual.presion ?? valorMedicion(medicion, ['presion', 'presion_pa', 'pressure', 'pressure_pa']);
+      formatoValorBD(actual.presion ?? valorMedicion(medicion, ['presion', 'presion_pa', 'pressure', 'pressure_pa']), true);
     const estado = valorMedicion(medicion, ['estado', 'status']);
     document.getElementById('estado').textContent = estado !== '--' ? estado : 'Normal';
+  }
+
+  function formatoValorBD(value, pressure = false) {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return '--';
+    return pressure ? Math.round(number).toLocaleString('es-AR') : number.toFixed(1);
   }
 
   function normalizarMedicion(item) {
@@ -294,9 +302,9 @@
 
       return `<tr>
         <td>${fecha && fecha !== '--' ? bdFormatArgentinaDateTime(new Date(fecha)) : '--'}</td>
-        <td>${temperatura} &deg;C</td>
-        <td>${humedad} %HR</td>
-        <td>${presion} Pa</td>
+        <td>${formatoValorBD(temperatura)} &deg;C</td>
+        <td>${formatoValorBD(humedad)} %HR</td>
+        <td>${formatoValorBD(presion, true)} Pa</td>
         <td><span class="badge ok">${estado && estado !== '--' ? estado : 'Normal'}</span></td>
       </tr>`;
     }).join('');

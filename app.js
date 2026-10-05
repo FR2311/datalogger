@@ -20,7 +20,9 @@ function _updateDarkToggleBtn() {
   const btn = document.getElementById('dark-toggle-btn');
   if (!btn) return;
   const isDark = document.body.classList.contains('dark');
-  btn.querySelector('.dt-icon').textContent  = isDark ? '🌙' : '☀️';
+  btn.querySelector('.dt-icon').innerHTML = isDark
+    ? '<svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20 15a8 8 0 0 1-11-11 9 9 0 1 0 11 11Z"/></svg>'
+    : '<svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="#f6b815" stroke-width="1.7"><circle cx="12" cy="12" r="4.5" fill="#f6c433"/><path d="M12 1v3m0 16v3M1 12h3m16 0h3M4 4l2 2m12 12 2 2M20 4l-2 2M6 18l-2 2"/></svg>';
   btn.querySelector('.dt-label').textContent = isDark ? 'Oscuro' : 'Claro';
 }
 
@@ -294,9 +296,9 @@ let dashMainChart = null;
 
 // Estado de series: color y visibilidad
 const DS_DEFAULTS = {
-  temp: { color: '#003087', visible: true },
-  hum:  { color: '#0EA5E9', visible: true },
-  pres: { color: '#10B981', visible: true }
+  temp: { color: '#30B77E', visible: true },
+  hum:  { color: '#249DCF', visible: true },
+  pres: { color: '#E24B60', visible: true }
 };
 
 let dsState = {}; // se inicializa en initDashboard
@@ -583,7 +585,7 @@ function selectTempUnit(unit) {
 
 function renderTempValues(unit) {
   const last = TEMP_DATA[TEMP_DATA.length - 1];
-  const conv = d => convertTemp(d, unit);
+  const conv = d => convertTemp(d, unit).toFixed(unit === 'K' ? 2 : 1);
   const u    = tempUnit(unit);
   const el   = id => document.getElementById(id);
 
@@ -735,6 +737,20 @@ function makeHumRows() {
 /* ===== PRESION ===== */
 let presChartInst = null;
 
+function convertPressure(pa, unit = 'Pa') {
+  if (unit === 'hPa') return (pa / 100).toFixed(1);
+  if (unit === 'atm') return (pa / 101325).toFixed(4);
+  if (unit === 'mmHg') return (pa * 0.00750062).toFixed(1);
+  return Math.round(pa).toLocaleString('es-AR');
+}
+
+function selectPresUnit(unit) {
+  if (!['Pa', 'hPa', 'atm', 'mmHg'].includes(unit)) return;
+  saveConfig({ presUnit: unit });
+  _renderPresValues();
+  _buildPresChart();
+}
+
 function initPresion() {
   startArgentinaClock('last-update');
   _renderPresValues();
@@ -757,11 +773,13 @@ function _renderPresValues() {
   const last = PRES_DATA[PRES_DATA.length - 1];
   const avg  = PRES_DATA.reduce((a, b) => a + b, 0) / PRES_DATA.length;
   const el   = id => document.getElementById(id);
-
-  if (el('pres-current'))  el('pres-current').textContent  = last.toLocaleString('es-AR');
-  if (el('pres-min'))      el('pres-min').textContent      = Math.min(...PRES_DATA).toLocaleString('es-AR') + ' Pa';
-  if (el('pres-max'))      el('pres-max').textContent      = Math.max(...PRES_DATA).toLocaleString('es-AR') + ' Pa';
-  if (el('pres-avg'))      el('pres-avg').textContent      = Math.round(avg).toLocaleString('es-AR') + ' Pa';
+  const unit = loadConfig().presUnit || 'Pa';
+  if (el('pres-current')) el('pres-current').textContent = convertPressure(last, unit);
+  const unitLabel = el('pres-current')?.parentElement.querySelector('.unit');
+  if (unitLabel) unitLabel.textContent = unit;
+  if (el('pres-min')) el('pres-min').textContent = convertPressure(Math.min(...PRES_DATA), unit) + ' ' + unit;
+  if (el('pres-max')) el('pres-max').textContent = convertPressure(Math.max(...PRES_DATA), unit) + ' ' + unit;
+  if (el('pres-avg')) el('pres-avg').textContent = convertPressure(avg, unit) + ' ' + unit;
   if (el('pres-pa-display')) el('pres-pa-display').textContent = last.toLocaleString('es-AR') + ' Pa';
   if (el('pres-hpa'))      el('pres-hpa').textContent      = (last / 100).toFixed(1) + ' hPa';
   if (el('pres-atm'))      el('pres-atm').textContent      = (last / 101325).toFixed(4) + ' atm';
@@ -772,9 +790,11 @@ function _buildPresChart() {
   const ctx = document.getElementById('presionChart');
   if (!ctx) return;
   if (presChartInst) presChartInst.destroy();
+  const unit = loadConfig().presUnit || 'Pa';
+  const divisor = { Pa: 1, hPa: 100, atm: 101325, mmHg: 1 / 0.00750062 }[unit];
   presChartInst = new Chart(ctx, {
     type: 'line',
-    data: { labels: HOUR_LABELS, datasets: [{ label: 'Presión (Pa)', data: PRES_DATA, borderColor: '#003087', backgroundColor: 'rgba(0,48,135,.1)', fill: true, tension: .4 }] },
+    data: { labels: HOUR_LABELS, datasets: [{ label: `Presión (${unit})`, data: PRES_DATA.map(value => value / divisor), borderColor: '#559cdb', backgroundColor: 'rgba(85,156,219,.1)', fill: true, tension: .4 }] },
     options: { ...CHART_DEFAULTS }
   });
 }
@@ -797,11 +817,11 @@ function makePresRows() {
 
 /* ===== HISTORIAL ===== */
 let histChartInst = null;
+let historyPage = 0;
 
 function initHistorial() {
   startArgentinaClock('last-update');
-  renderHistorialTable();
-  renderHistorialChart();
+  applyHistoryFilters();
   startDataAutoRefresh(refreshHistorial);
 }
 
@@ -812,47 +832,104 @@ function refreshHistorial() {
   renderHistorialChart();
 }
 
+function getHistoryRows() {
+  const sampleInterval = getSamplingIntervalMs();
+  const now = getCurrentSampleTime(sampleInterval).getTime();
+  const fromValue = document.getElementById('filter-from')?.value;
+  const toValue = document.getElementById('filter-to')?.value;
+  const from = fromValue ? new Date(fromValue).getTime() : -Infinity;
+  const to = toValue ? new Date(toValue).getTime() + 59999 : Infinity;
+  const displayInterval = parseSamplingInterval(document.getElementById('filter-interval')?.value || '1 minuto');
+  let bucket = null;
+  return TEMP_DATA.map((tc, i) => ({
+    timestamp: new Date(now - (TEMP_DATA.length - 1 - i) * sampleInterval),
+    temperatura: tc,
+    humedad: HUM_DATA[i],
+    presion: PRES_DATA[i]
+  })).filter(row => {
+    const time = row.timestamp.getTime();
+    if (time < from || time > to) return false;
+    const current = Math.floor(time / displayInterval);
+    if (current === bucket) return false;
+    bucket = current;
+    return true;
+  });
+}
+
+function applyHistoryFilters() {
+  historyPage = 0;
+  renderHistorialTable();
+  renderHistorialChart();
+}
+
+function changeHistoryPage(direction) {
+  const lastPage = Math.max(0, Math.ceil(getHistoryRows().length / 20) - 1);
+  historyPage = Math.max(0, Math.min(lastPage, historyPage + direction));
+  renderHistorialTable();
+}
+
 function renderHistorialTable() {
   const tbody = document.getElementById('table-hist');
   if (!tbody) return;
-  const interval = getSamplingIntervalMs();
-  const now = getCurrentSampleTime(interval).getTime();
-  tbody.innerHTML = Array.from({ length: 20 }, (_, i) => {
-    const t  = new Date(now - i * interval);
-    const tc = TEMP_DATA[TEMP_DATA.length - 1 - (i % DATA_POINTS)] ?? randomBetween(22, 26);
-    const rh = HUM_DATA[HUM_DATA.length  - 1 - (i % DATA_POINTS)] ?? randomBetween(58, 66);
-    const pa = PRES_DATA[PRES_DATA.length - 1 - (i % DATA_POINTS)] ?? 101325;
+  const all = getHistoryRows().reverse();
+  const lastPage = Math.max(0, Math.ceil(all.length / 20) - 1);
+  historyPage = Math.min(historyPage, lastPage);
+  const offset = historyPage * 20;
+  const rows = all.slice(offset, offset + 20);
+  tbody.innerHTML = rows.map(row => {
+    const state = getTempAlertState(row.temperatura);
     return `<tr>
-      <td>${formatArgentinaDateTime(t)}</td>
-      <td>${tc} °C</td>
-      <td>${rh.toFixed(1)} %HR</td>
-      <td>${pa.toLocaleString('es-AR')} Pa</td>
-      <td><span class="badge ok">Normal</span></td>
+      <td>${formatArgentinaDateTime(row.timestamp)}</td>
+      <td>${row.temperatura.toFixed(1)} °C</td>
+      <td>${row.humedad.toFixed(1)} %HR</td>
+      <td>${row.presion.toLocaleString('es-AR')} Pa</td>
+      <td><span class="badge ${state.badge}">${state.label}</span></td>
     </tr>`;
-  }).join('');
+  }).join('') || '<tr><td colspan="5">No hay lecturas disponibles para estos filtros.</td></tr>';
+  const count = document.getElementById('history-count');
+  if (count) count.textContent = `${all.length} registros disponibles`;
+  const pageCount = document.getElementById('history-page-count');
+  if (pageCount) pageCount.textContent = all.length ? `Mostrando ${offset + 1}–${offset + rows.length} de ${all.length} registros` : 'Sin registros';
+  const prev = document.getElementById('history-prev');
+  const next = document.getElementById('history-next');
+  if (prev) prev.disabled = historyPage === 0;
+  if (next) next.disabled = historyPage === lastPage;
 }
 
 function renderHistorialChart() {
   const ctx = document.getElementById('histChart');
   if (!ctx) return;
   if (histChartInst) histChartInst.destroy();
+  const rows = getHistoryRows();
+  const selected = document.getElementById('filter-var')?.value || 'all';
+  const datasets = [];
+  const scales = { x: CHART_DEFAULTS.scales.x };
+  const add = (label, field, axis, color, position) => {
+    datasets.push({ label, data: rows.map(row => row[field]), backgroundColor: color, yAxisID: axis, borderRadius: 3 });
+    scales[axis] = { type: 'linear', position, grid: { drawOnChartArea: position !== 'right' }, ticks: { font: { size: 11, family: 'DataLogger UI' }, color } };
+  };
+  if (selected === 'all' || selected === 'temp') add('Temperatura (°C)', 'temperatura', 'yTemp', '#4f7fac', 'left');
+  if (selected === 'all' || selected === 'hum') add('Humedad (%HR)', 'humedad', 'yHum', '#81bfe7', 'right');
+  if (selected === 'pres') add('Presión (Pa)', 'presion', 'yPres', '#4f7fac', 'left');
+  const legend = document.querySelector('.chart-header .legend');
+  if (legend) legend.innerHTML = datasets.map(dataset => `<span class="legend-dot" style="background:${dataset.backgroundColor}"></span>${dataset.label}`).join(' ');
   histChartInst = new Chart(ctx, {
     type: 'bar',
-    data: {
-      labels: HOUR_LABELS,
-      datasets: [
-        { label: 'Temperatura (°C)', data: TEMP_DATA, backgroundColor: 'rgba(0,48,135,.7)', yAxisID: 'yTemp', borderRadius: 3 },
-        { label: 'Humedad (%HR)',    data: HUM_DATA,  backgroundColor: 'rgba(0,120,212,.5)', yAxisID: 'yHum',  borderRadius: 3 }
-      ]
-    },
-    options: {
-      ...CHART_DEFAULTS,
-      plugins: { legend: { display: true, position: 'top' } },
-      scales: {
-        x: CHART_DEFAULTS.scales.x,
-        yTemp: { type: 'linear', position: 'left',  grid: { color: 'rgba(0,0,0,.05)' }, ticks: { font: { size: 11, family: 'Tecnico' }, color: '#003087' } },
-        yHum:  { type: 'linear', position: 'right', grid: { drawOnChartArea: false },   ticks: { font: { size: 11, family: 'Tecnico' }, color: '#0078d4' } }
-      }
-    }
+    data: { labels: rows.map(row => formatArgentinaTime(row.timestamp)), datasets },
+    options: { ...CHART_DEFAULTS, plugins: { legend: { display: false } }, scales }
   });
+}
+
+function exportHistorialCSV() {
+  const rows = getHistoryRows();
+  if (!rows.length) return;
+  const csv = ['timestamp,temperatura,humedad,presion', ...rows.map(row => [
+    row.timestamp.toISOString(), row.temperatura, row.humedad, row.presion
+  ].join(','))].join('\r\n');
+  const url = URL.createObjectURL(new Blob(['\ufeff', csv], { type: 'text/csv;charset=utf-8' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'datalogger-historial.csv';
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
